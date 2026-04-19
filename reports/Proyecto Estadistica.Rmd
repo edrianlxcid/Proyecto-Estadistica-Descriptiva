@@ -1,0 +1,159 @@
+---
+title: "Análisis Estadístico: Ventas de Contratos" 
+author: "Kevin Quiñonez - Desarrollo de Software" 
+date: "r Sys.Date()" 
+output: html_document
+---
+Configuración e Instalación
+
+```{r setup, include=FALSE}
+# Instalación y carga de librerías
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(dplyr, ggplot2, readr, DescTools, knitr, kableExtra)
+
+# Definición de la ruta directa al archivo CSV
+mi_ruta <- "C:/Users/kadri/Desktop/Escritorio/Proyecto Estadistica/data/PF estadistica Descriptiva.csv"
+```
+MÓDULO 1: Importación de Datos
+
+```{r}
+# Lectura de la base de datos
+datos <- read_csv(mi_ruta)
+
+# Vista previa profesional
+kable(head(datos)) %>% 
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F)
+```
+
+MÓDULO 2: Medidas de Tendencia Central
+
+```{r}
+# Cálculos de tendencia central generales
+media_contrato <- mean(datos$`Total Contrato`, na.rm = TRUE)
+mediana_contrato <- median(datos$`Total Contrato`, na.rm = TRUE)
+moda_programa <- as.character(Mode(datos$Programas, na.rm = TRUE)[1])
+
+# Tabla de resultados
+resumen_central <- data.frame(
+  Métrica = c("Media (Promedio)", "Mediana (Centro)", "Moda (Más vendido)"),
+  Valor = c(round(media_contrato, 2), round(mediana_contrato, 2), moda_programa)
+)
+
+kable(resumen_central, caption = "Tendencia Central (Global)") %>% 
+  kable_styling(full_width = F, position = "left")
+```
+
+MÓDULO 3: Medidas de Dispersión
+
+```{r}
+# Cálculos de dispersión globales
+varianza_val <- var(datos$`Total Contrato`, na.rm = TRUE)
+desviacion_val <- sd(datos$`Total Contrato`, na.rm = TRUE)
+cv_val <- (desviacion_val / media_contrato) * 100
+
+resumen_dispersion <- data.frame(
+  Parámetro = c("Varianza", "Desviación Estándar", "Coeficiente de Variación"),
+  Resultado = c(round(varianza_val, 2), round(desviacion_val, 2), paste0(round(cv_val, 2), "%"))
+)
+
+kable(resumen_dispersion, caption = "Dispersión (Global)") %>% 
+  kable_styling(full_width = F, position = "left")
+
+# --- ANÁLISIS EN DIFERENTES AMBIENTES (POR SUCURSAL) ---
+analisis_ambientes <- datos %>%
+  group_by(Sucursal) %>%
+  summarise(
+    Media = round(mean(`Total Contrato`, na.rm=TRUE), 2),
+    Mediana = round(median(`Total Contrato`, na.rm=TRUE), 2),
+    Varianza = round(var(`Total Contrato`, na.rm=TRUE), 2),
+    Desv_Estandar = round(sd(`Total Contrato`, na.rm=TRUE), 2),
+    CV_Porcentaje = round((Desv_Estandar / Media) * 100, 2)
+  )
+
+kable(analisis_ambientes, caption = "Estadística Separada por Ambientes (Sucursales)") %>% 
+  kable_styling(bootstrap_options = c("striped", "bordered"), full_width = F)
+```
+
+ MÓDULO 4: Medidas de Posición
+```{r}
+# 1. Cuartiles e IQR
+cuartiles <- quantile(datos$`Total Contrato`, probs = c(0.25, 0.50, 0.75), na.rm = TRUE)
+iqr_val <- IQR(datos$`Total Contrato`, na.rm = TRUE)
+
+resumen_cuartiles <- data.frame(
+  Cuartil = c("Q1 (25%)", "Q2 (50%)", "Q3 (75%)", "Rango Intercuartílico"),
+  Monto = c(cuartiles[1], cuartiles[2], cuartiles[3], iqr_val)
+)
+kable(resumen_cuartiles, caption = "Cuartiles") %>% kable_styling(full_width = F, position = "float_left")
+
+# 2. Deciles (10% al 90%)
+deciles <- quantile(datos$`Total Contrato`, probs = seq(0.1, 0.9, by=0.1), na.rm = TRUE)
+kable(data.frame(Decil = names(deciles), Monto = deciles), caption = "Deciles", row.names = FALSE) %>% 
+  kable_styling(full_width = F, position = "left")
+
+# 3. Percentiles Específicos (Ej: 1%, 5%, 95%, 99%)
+percentiles <- quantile(datos$`Total Contrato`, probs = c(0.01, 0.05, 0.95, 0.99), na.rm = TRUE)
+kable(data.frame(Percentil = names(percentiles), Monto = percentiles), caption = "Percentiles Extremos", row.names = FALSE) %>% 
+  kable_styling(full_width = F, position = "left")
+```
+
+MÓDULO 5: Visualización de Datos
+
+```{r}
+# --- TABLA DE FRECUENCIAS ---
+tabla_frecuencia <- datos %>%
+  count(Programas) %>%
+  arrange(desc(n)) %>%
+  mutate(
+    Frec_Relativa = n / sum(n),
+    Porcentaje = Frec_Relativa * 100,
+    Frec_Acumulada = cumsum(n),
+    Porc_Acumulado = cumsum(Porcentaje)
+  )
+
+kable(tabla_frecuencia %>% mutate(across(where(is.numeric), ~round(., 2))), 
+      caption = "Tabla de Frecuencias: Programas Vendidos") %>% 
+  kable_styling(bootstrap_options = "striped", full_width = F)
+# --- HISTOGRAMA Y POLÍGONO DE FRECUENCIAS ---
+ggplot(datos, aes(x = `Total Contrato`)) +
+  geom_histogram(fill = "steelblue", color = "black", bins = 20, alpha = 0.7) +
+  geom_freqpoly(color = "red", bins = 20, size = 1.2) + # Polígono de frecuencia
+  labs(title = "Histograma y Polígono de Frecuencias", x = "Monto del Contrato ($)", y = "Frecuencia") +
+  theme_minimal()
+
+# --- DIAGRAMA DE CAJAS (BOXPLOT) ---
+ggplot(datos, aes(x = Sucursal, y = `Total Contrato`, fill = Sucursal)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Diagrama de Cajas (Detección de Outliers)", y = "Monto ($)", x = "Sucursal") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+# --- GRÁFICO CIRCULAR (PIE CHART) ---
+# Usaremos la variable Financiamiento para que no se sature el gráfico
+frec_financiamiento <- datos %>% count(Financiamiento) %>% mutate(prop = n / sum(n) * 100)
+
+ggplot(frec_financiamiento, aes(x = "", y = prop, fill = Financiamiento)) +
+  geom_bar(stat = "identity", width = 1, color = "white") +
+  coord_polar("y", start = 0) +
+  geom_text(aes(label = paste0(round(prop, 1), "%")), position = position_stack(vjust = 0.5), color = "white", fontface="bold") +
+  labs(title = "Gráfico Circular: Financiamiento de Contratos") +
+  theme_void()
+
+# --- DIAGRAMA DE PARETO ---
+# Usaremos la tabla de frecuencias de los programas calculada previamente
+max_frec <- sum(tabla_frecuencia$n)
+
+ggplot(tabla_frecuencia, aes(x = reorder(Programas, -n))) +
+  geom_bar(aes(y = n), stat = "identity", fill = "#2c3e50", color = "black") +
+  geom_line(aes(y = (Porc_Acumulado/100) * max_frec, group = 1), color = "red", linewidth = 1.2) +
+  geom_point(aes(y = (Porc_Acumulado/100) * max_frec), color = "red", size = 3) +
+  scale_y_continuous(
+    name = "Frecuencia Absoluta",
+    sec.axis = sec_axis(~ . / max_frec, name = "Porcentaje Acumulado", labels = scales::percent)
+  ) +
+  labs(title = "Diagrama de Pareto: Análisis 80/20 de Programas", x = "Programas") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+
+```
+
