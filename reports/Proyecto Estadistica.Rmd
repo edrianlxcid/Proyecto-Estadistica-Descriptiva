@@ -1,6 +1,6 @@
 ---
 title: "Análisis Estadístico: Ventas de Contratos" 
-author: "Kevin Quiñonez - Desarrollo de Software" 
+author: "Kevin Quiñonez, Michael Chilan, Steven Gaspata, Luis Tarabata - Desarrollo de Software" 
 date: "r Sys.Date()" 
 output: html_document
 ---
@@ -20,7 +20,7 @@ MÓDULO 1: Importación de Datos
 # Lectura de la base de datos
 datos <- read_csv(mi_ruta)
 
-# Vista previa profesional
+# Vista previa 
 kable(head(datos)) %>% 
   kable_styling(bootstrap_options = c("striped", "hover", "condensed"), full_width = F)
 ```
@@ -59,7 +59,7 @@ resumen_dispersion <- data.frame(
 kable(resumen_dispersion, caption = "Dispersión (Global)") %>% 
   kable_styling(full_width = F, position = "left")
 
-# --- ANÁLISIS EN DIFERENTES AMBIENTES (POR SUCURSAL) ---
+#  ANÁLISIS EN DIFERENTES AMBIENTES, EN ESTE CASO POR SUCURSAL
 analisis_ambientes <- datos %>%
   group_by(Sucursal) %>%
   summarise(
@@ -76,7 +76,7 @@ kable(analisis_ambientes, caption = "Estadística Separada por Ambientes (Sucurs
 
  MÓDULO 4: Medidas de Posición
 ```{r}
-# 1. Cuartiles e IQR
+# 1. Cuartiles
 cuartiles <- quantile(datos$`Total Contrato`, probs = c(0.25, 0.50, 0.75), na.rm = TRUE)
 iqr_val <- IQR(datos$`Total Contrato`, na.rm = TRUE)
 
@@ -91,7 +91,7 @@ deciles <- quantile(datos$`Total Contrato`, probs = seq(0.1, 0.9, by=0.1), na.rm
 kable(data.frame(Decil = names(deciles), Monto = deciles), caption = "Deciles", row.names = FALSE) %>% 
   kable_styling(full_width = F, position = "left")
 
-# 3. Percentiles Específicos (Ej: 1%, 5%, 95%, 99%)
+# 3. Percentiles 
 percentiles <- quantile(datos$`Total Contrato`, probs = c(0.01, 0.05, 0.95, 0.99), na.rm = TRUE)
 kable(data.frame(Percentil = names(percentiles), Monto = percentiles), caption = "Percentiles Extremos", row.names = FALSE) %>% 
   kable_styling(full_width = F, position = "left")
@@ -100,7 +100,7 @@ kable(data.frame(Percentil = names(percentiles), Monto = percentiles), caption =
 MÓDULO 5: Visualización de Datos
 
 ```{r}
-# --- TABLA DE FRECUENCIAS ---
+# TABLA DE FRECUENCIAS 
 tabla_frecuencia <- datos %>%
   count(Programas) %>%
   arrange(desc(n)) %>%
@@ -114,21 +114,21 @@ tabla_frecuencia <- datos %>%
 kable(tabla_frecuencia %>% mutate(across(where(is.numeric), ~round(., 2))), 
       caption = "Tabla de Frecuencias: Programas Vendidos") %>% 
   kable_styling(bootstrap_options = "striped", full_width = F)
-# --- HISTOGRAMA Y POLÍGONO DE FRECUENCIAS ---
+#  HISTOGRAMA Y POLÍGONO DE FRECUENCIAS 
 ggplot(datos, aes(x = `Total Contrato`)) +
   geom_histogram(fill = "steelblue", color = "black", bins = 20, alpha = 0.7) +
   geom_freqpoly(color = "red", bins = 20, size = 1.2) + # Polígono de frecuencia
   labs(title = "Histograma y Polígono de Frecuencias", x = "Monto del Contrato ($)", y = "Frecuencia") +
   theme_minimal()
 
-# --- DIAGRAMA DE CAJAS (BOXPLOT) ---
+# DIAGRAMA DE CAJAS (BOXPLOT) 
 ggplot(datos, aes(x = Sucursal, y = `Total Contrato`, fill = Sucursal)) +
   geom_boxplot(alpha = 0.7) +
   labs(title = "Diagrama de Cajas (Detección de Outliers)", y = "Monto ($)", x = "Sucursal") +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
-# --- GRÁFICO CIRCULAR (PIE CHART) ---
-# Usaremos la variable Financiamiento para que no se sature el gráfico
+# GRÁFICO CIRCULAR (PIE CHART) 
+
 frec_financiamiento <- datos %>% count(Financiamiento) %>% mutate(prop = n / sum(n) * 100)
 
 ggplot(frec_financiamiento, aes(x = "", y = prop, fill = Financiamiento)) +
@@ -139,7 +139,7 @@ ggplot(frec_financiamiento, aes(x = "", y = prop, fill = Financiamiento)) +
   theme_void()
 
 # --- DIAGRAMA DE PARETO ---
-# Usaremos la tabla de frecuencias de los programas calculada previamente
+
 max_frec <- sum(tabla_frecuencia$n)
 
 ggplot(tabla_frecuencia, aes(x = reorder(Programas, -n))) +
