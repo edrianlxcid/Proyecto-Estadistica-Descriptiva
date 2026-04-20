@@ -1,30 +1,29 @@
-# ==============================================================================
+
 # PROYECTO FINAL: ESTADÍSTICA DESCRIPTIVA - DASHBOARD INTERACTIVO (SHINY)
-# Autor: Kevin Quiñonez - Desarrollo de Software
-# ==============================================================================
+# Autores: Kevin Quiñonez, Steven Gaspata, Michael Chilan, Luis Tarabata - Desarrollo de Software
 
 # 1. CARGA DE LIBRERÍAS
-# Si te falta alguna, recuerda instalarla en consola con install.packages("nombre")
+
 library(shiny)
 library(dplyr)
 library(ggplot2)
 library(readr)
-library(bslib) # Librería extra para darle un tema moderno (Bootstrap) al frontend
+library(bslib) # Librería extra 
 
-# 2. CARGA DE DATOS (Se hace fuera del UI y Server para que cargue solo una vez)
+# 2. CARGA DE DATOS 
 mi_ruta <- "C:/Users/kadri/Desktop/Escritorio/Proyecto Estadistica/data/PF estadistica Descriptiva.csv"
 datos_app <- read_csv(mi_ruta, show_col_types = FALSE)
 
-# ==============================================================================
+
 # FRONTEND (USER INTERFACE - UI)
-# ==============================================================================
+
 ui <- fluidPage(
   
-  # Tema visual moderno usando bslib (similar a Bootstrap en web dev normal)
+  # Tema visual moderno usando bslib 
   theme = bs_theme(bootswatch = "flatly", primary = "#2c3e50"),
   
   # Título de la App Web
-  titlePanel("📊 Dashboard Interactivo: Ventas de Contratos"),
+  titlePanel("Dashboard Interactivo: Ventas de Contratos"),
   
   # Estructura de barra lateral (Filtros) y panel principal (Gráficos)
   sidebarLayout(
@@ -35,13 +34,13 @@ ui <- fluidPage(
       p("Ajusta los controles para actualizar los datos en tiempo real."),
       hr(), # Línea divisoria
       
-      # Filtro 1: Dropdown para Sucursal
+      # Filtro 1: para Sucursal
       selectInput(inputId = "filtro_sucursal", 
                   label = "🏢 Seleccione Sucursal:",
                   choices = c("Todas", unique(datos_app$Sucursal)),
                   selected = "Todas"),
       
-      # Filtro 2: Dropdown para Financiamiento
+      # Filtro 2:  para Financiamiento
       selectInput(inputId = "filtro_financia", 
                   label = "💳 Tipo de Financiamiento:",
                   choices = c("Todos", unique(datos_app$Financiamiento)),
@@ -56,7 +55,7 @@ ui <- fluidPage(
                   pre = "$", sep = ",")
     ),
     
-    # --- PANEL PRINCIPAL (RESULTADOS) ---
+    #  PANEL PRINCIPAL (RESULTADOS) 
     mainPanel(
       # Creamos pestañas (Tabs) para organizar la información
       tabsetPanel(
@@ -86,9 +85,9 @@ ui <- fluidPage(
   )
 )
 
-# ==============================================================================
+
 # BACKEND (SERVER LÓGICA)
-# ==============================================================================
+
 server <- function(input, output) {
   
   # REACTIVIDAD: Creamos un "DataFrame" dinámico que escucha a los filtros del UI
@@ -162,10 +161,9 @@ server <- function(input, output) {
   # OUTPUT 4: Renderizar Tabla Dinámica
   output$tabla_datos <- renderDataTable({
     datos_filtrados()
-  }, options = list(pageLength = 10, scrollX = TRUE)) # Configuración para que sea amigable a la vista
+  }, options = list(pageLength = 10, scrollX = TRUE)) 
 }
 
-# ==============================================================================
 # EJECUCIÓN DE LA APLICACIÓN
-# ==============================================================================
+
 shinyApp(ui = ui, server = server)
